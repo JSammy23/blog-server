@@ -99,3 +99,12 @@ exports.update_post = [
         res.status(200).json({ message: 'Post updated successfully!', post: updatedPost });
     })
 ];
+
+exports.delete_post = asyncHandler(async (req, res, next) => {
+    const postToDelete = await Post.findById(req.params.id);
+    if (!postToDelete) {
+        return res.status(404).json({ message: 'Post not found' });
+    }
+    await Post.findByIdAndRemove(req.params.id);
+    res.status(200).json({ message: 'Post deleted successfully!' });
+});
