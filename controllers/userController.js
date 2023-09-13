@@ -82,11 +82,81 @@ exports.create_user = [
 ];
 
 // Update user
-exports.update_user = asyncHandler(async (req, res, next) => {
-    res.send(`Not Implemented: PUT Update User ${req.params.id}`);
-});
+exports.update_user = [
+    // Validate and sanitize fields only if they exist in the request
+    body('firstName')
+        .if(req => req.body.firstName !== undefined)
+        .trim()
+        .notEmpty().withMessage('First name cannot be empty.')
+        .isLength({max: 30}).withMessage('First name cannot exceed 30 characters.')
+        .escape(),
+    
+    body('lastName')
+        .if(req => req.body.lastName !== undefined)
+        .trim()
+        .notEmpty().withMessage('Last name cannot be empty.')
+        .isLength({max: 30}).withMessage('Last name cannot exceed 30 characters.')
+        .escape(),
+
+    body('username')
+        .if(req => req.body.username !== undefined)
+        .trim()
+        .isAlphanumeric().withMessage('Username can only contain alphanumeric characters.')
+        .isLength({min: 2, max: 30}).withMessage('Username must be between 2 and 30 characters.')
+        .escape(),
+
+    body('password')
+        .if(req => req.body.password !== undefined)
+        .trim()
+        .isLength({min: 8, max: 100}).withMessage('Password must be between 8 and 100 characters.')
+        .custom((value, {req}) => {
+            if (value != req.body.confirm_password) {
+                throw new Error('Passwords must match.');
+            }
+            return true;
+        }),
+
+    body('confirm_password')
+        .if(req => req.body.confirm_password !== undefined)
+        .trim()
+        .isLength({min: 8, max: 100}).withMessage('Confirmation password must be between 8 and 100 characters.'),
+
+    body('email')
+        .if(req => req.body.email !== undefined)
+        .trim()
+        .notEmpty().withMessage('Email cannot be empty')
+        .isEmail().withMessage('Invalid email format')
+        .normalizeEmail(),
+
+    asyncHandler(async (req, res, next) => {
+        const errors = validationResult(req);
+        
+        if (!errors.isEmpty()) {
+            return res.status(400).json({errors: errors.array()});
+        }
+
+        // If updating password, hash the new one
+        if (req.body.password) {
+            req.body.password = await bcrypt.hash(req.body.password, 10);
+        }
+
+        // Update user with new values
+        const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({ message: 'User updated successfully!', user: updatedUser });
+    })
+];
 
 // Delete user
 exports.delete_user = asyncHandler(async (req, res, next) => {
-    res.send(`Not Implemented: Delete User ${req.params.id}`);
+    const userToDelete = await User.findById(req.params.id);
+    if (!userToDelete) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+    await User.findByIdAndRemove(req.params.id);
+    res.status(200).json({ message: 'User deleted successfully!' });
 });
