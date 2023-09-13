@@ -15,7 +15,7 @@ exports.index = asyncHandler(async (req, res, next) => {
 });
 
 exports.get_post = asyncHandler(async (req, res, next) => {
-    const post = await Post.findById(req.params.id).exec();
+    const post = await Post.findById(req.params.id).populate('comments').exec();
     res.json(post);
 });
 
