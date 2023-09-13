@@ -3,6 +3,7 @@ const User = require('../models/user');
 const { body, validationResult } = require("express-validator");
 const asyncHandler = require("express-async-handler");
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 /********** Routes needed **********/
 // Grab all users
@@ -160,3 +161,41 @@ exports.delete_user = asyncHandler(async (req, res, next) => {
     await User.findByIdAndRemove(req.params.id);
     res.status(200).json({ message: 'User deleted successfully!' });
 });
+
+// User Login
+exports.login = async (req, res, next) => {
+    const { username, password } = req.body;
+
+    // Find user by username
+    const user = await User.findOne({ username });
+    if (!user) {
+        return res.status(404).json({ username: 'User not found' });
+    }
+
+    // Check password (using bcrypt or whatever hashing method you've chosen)
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (isMatch) {
+        // User matched, create JWT Payload
+        const payload = {
+            id: user.id,
+            username: user.username
+            // any other data you want in the token
+        };
+
+        // Sign the token
+        jwt.sign(
+            payload,
+            process.env.JWT_KEY, // using the secret key from .env
+            { expiresIn: 3600 },  // token will expire in 1 hour
+            (err, token) => {
+                res.json({
+                    success: true,
+                    token: 'Bearer ' + token,
+                    message: 'Login successful!'
+                });
+            }
+        );
+    } else {
+        return res.status(400).json({ password: 'Password incorrect' });
+    }
+};
