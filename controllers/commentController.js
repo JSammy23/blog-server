@@ -43,6 +43,11 @@ exports.delete_comment = asyncHandler(async (req, res, next) => {
         return res.status(404).json({ message: 'Comment not found.' });
     }
 
+    // Authorization check: Only the comment's author or an admin can delete it
+    if (!(req.user.id.toString() === comment.user.toString() || req.user.role === 'admin')) {
+        return res.status(403).json({ message: 'Unauthorized.' });
+    }
+
     // Find the associated post
     const post = await Post.findById(req.params.id);
 
@@ -57,9 +62,9 @@ exports.delete_comment = asyncHandler(async (req, res, next) => {
     }
 
     await post.save();
-    
+
     // Now, delete the comment
-    await Comment.findByIdAndDelete(req.params.commentId);
+    await comment.deleteOne({ _id: comment._id });
 
     res.status(200).json({ message: 'Comment deleted successfully!' });
 });
