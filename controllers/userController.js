@@ -172,7 +172,7 @@ exports.login = async (req, res, next) => {
         return res.status(404).json({ username: 'User not found' });
     }
 
-    // Check password (using bcrypt or whatever hashing method you've chosen)
+    // Check password (using bcrypt)
     const isMatch = await bcrypt.compare(password, user.password);
     if (isMatch) {
         // User matched, create JWT Payload
