@@ -1,6 +1,7 @@
 const Post = require('../models/post');
 const { body, validationResult } = require("express-validator");
 const asyncHandler = require("express-async-handler");
+const { default: mongoose } = require('mongoose');
 
 /********* Post Routes *********/
 // Get all posts
@@ -9,8 +10,15 @@ const asyncHandler = require("express-async-handler");
 // Update post
 // Delete post
 
+// Get all published posts
 exports.index = asyncHandler(async (req, res, next) => {
-    const posts = await Post.find({}).exec();
+    const posts = await Post.find({ published: true }).populate('user').exec();
+    res.json(posts);
+});
+
+// Get all posts
+exports.getAllPosts = asyncHandler(async (req, res, next) => {
+    const posts = await Post.find({}).populate('user').exec();
     res.json(posts);
 });
 
@@ -46,12 +54,13 @@ exports.create_post = [
         const post = new Post({
             title: req.body.title,
             content: req.body.content,
+            user: req.body.user,
             ...req.body.published !== undefined && { published: req.body.published },
             ...req.body.allowComments !== undefined && { allowComments: req.body.allowComments }
         });
 
         const newPost = await post.save();
-        res.status(201).json({ message: 'Posy created successfully!', post: newPost });
+        res.status(201).json({ message: 'Post created successfully!', post: newPost });
     })
 ]
 
