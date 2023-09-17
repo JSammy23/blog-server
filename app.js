@@ -7,6 +7,7 @@ var logger = require('morgan');
 const passport = require('passport');
 const passportConfig = require('./config/passport');
 const mongoose = require('mongoose');
+const cors = require('cors');
 
 
 
@@ -30,6 +31,9 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+app.use(cors({
+  origin: 'http://localhost:5173'
+}));
 app.use(passport.initialize());
 passportConfig(passport);
 app.use(logger('dev'));
