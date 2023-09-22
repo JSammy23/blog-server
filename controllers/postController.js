@@ -54,7 +54,7 @@ exports.create_post = [
         const post = new Post({
             title: req.body.title,
             content: req.body.content,
-            user: req.body.user,
+            user: req.user._id,
             ...req.body.published !== undefined && { published: req.body.published },
             ...req.body.allowComments !== undefined && { allowComments: req.body.allowComments }
         });
