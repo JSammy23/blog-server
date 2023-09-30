@@ -12,18 +12,42 @@ const { default: mongoose } = require('mongoose');
 
 // Get all published posts
 exports.index = asyncHandler(async (req, res, next) => {
-    const posts = await Post.find({ published: true }).populate('user').exec();
+    const posts = await Post.find({ published: true })
+        .populate('user')
+        .populate({
+            path: 'comments',
+            populate: ({
+                path: 'user'
+            })
+        })
+        .exec();
     res.json(posts);
 });
 
 // Get all posts
 exports.getAllPosts = asyncHandler(async (req, res, next) => {
-    const posts = await Post.find({}).populate('user').exec();
+    const posts = await Post.find({})
+        .populate('user')
+        .populate({
+            path: 'comments',
+            populate: ({
+                path: 'user'
+            })
+        })
+        .exec();
     res.json(posts);
 });
 
 exports.get_post = asyncHandler(async (req, res, next) => {
-    const post = await Post.findById(req.params.id).populate('comments').exec();
+    const post = await Post.findById(req.params.id)
+        .populate('user')
+        .populate({
+            path: 'comments',
+            populate: ({
+                path: 'user'
+            })
+        })
+        .exec();
     res.json(post);
 });
 
@@ -58,7 +82,7 @@ exports.create_post = [
             ...req.body.published !== undefined && { published: req.body.published },
             ...req.body.allowComments !== undefined && { allowComments: req.body.allowComments }
         });
-
+        console.log(req.body);
         const newPost = await post.save();
         res.status(201).json({ message: 'Post created successfully!', post: newPost });
     })
@@ -98,6 +122,7 @@ exports.update_post = [
         if (req.body.published !== undefined) updateData.published = req.body.published;
         if (req.body.allowComments !== undefined) updateData.allowComments = req.body.allowComments;
 
+        console.log(req.body);
         // Use findByIdAndUpdate to update the post.
         const updatedPost = await Post.findByIdAndUpdate(req.params.id, updateData, { new: true }); // "new: true" returns the modified document rather than the original.
 
