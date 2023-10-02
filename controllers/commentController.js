@@ -22,17 +22,19 @@ exports.create_comment = [
         }
 
         const comment = new Comment({
-            user: req.body.user,
+            user: req.user._id,
             content: req.body.content
         });
 
         await comment.save();
+        // Populate user for client side use
+        const populatedComment = await Comment.findById(comment._id).populate('user');
 
         // Add the comment to the post's comments array
         post.comments.push(comment);
         await post.save();
 
-        res.status(201).json({ message: 'Comment added successfully!', comment: comment });
+        res.status(201).json({ message: 'Comment added successfully!', comment: populatedComment });
     })
 ];
 
