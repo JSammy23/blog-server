@@ -38,17 +38,34 @@ exports.getAllPosts = asyncHandler(async (req, res, next) => {
     res.json(posts);
 });
 
+// GET specific post by ID
 exports.get_post = asyncHandler(async (req, res, next) => {
-    const post = await Post.findById(req.params.id)
-        .populate('user')
-        .populate({
-            path: 'comments',
-            populate: ({
-                path: 'user'
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.error('Validation failed', errors.array()); 
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+        const post = await Post.findById(req.params.id)
+            .populate('user')
+            .populate({
+                path: 'comments',
+                populate: { path: 'user' }
             })
-        })
-        .exec();
-    res.json(post);
+            .exec();
+
+        if (!post) {
+            console.warn(`Post with ID ${req.params.id} not found.`); 
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        console.log(`Post with ID ${req.params.id} retrieved successfully.`); 
+        res.json(post);
+    } catch (error) {
+        console.error(`Error retrieving post with ID ${req.params.id}: ${error.message}`, error); 
+        next(error); // Forward to error handling middleware
+    }
 });
 
 exports.create_post = [
