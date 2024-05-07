@@ -13,7 +13,7 @@ router.get('/', postController.index);
 router.get('/all', passport.authenticate('jwt', {session: false}), mware.ensureAdmin, postController.getAllPosts);
 
 // GET specific post
-router.get('/:id', postController.get_post);
+router.get('/:id', mware.validatePostId, postController.get_post);
 
 // POST create post
 router.post('/', passport.authenticate('jwt', {session: false}), mware.ensureAdmin, postController.create_post);
